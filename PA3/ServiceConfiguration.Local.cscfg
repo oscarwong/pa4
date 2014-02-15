@@ -10,6 +10,7 @@
     <Instances count="1" />
     <ConfigurationSettings>
       <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="UseDevelopmentStorage=true" />
+      <Setting name="StorageConnectionString" value="DefaultEndpointsProtocol=https;AccountName=oscarpa2;AccountKey=zkmm+xL1p+u3VyiNqbsueNJL3arBPO+FvLYteAvKmioHKBb5RGqk7RFlXN8vYpmATsFsbleUqYIyJEi868mCeQ==" />
     </ConfigurationSettings>
   </Role>
 </ServiceConfiguration>
