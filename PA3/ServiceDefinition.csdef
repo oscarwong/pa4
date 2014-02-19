@@ -4,6 +4,9 @@
     <Imports>
       <Import moduleName="Diagnostics" />
     </Imports>
+    <ConfigurationSettings>
+      <Setting name="StorageConnectionString" />
+    </ConfigurationSettings>
   </WorkerRole>
   <WebRole name="WebRole1" vmsize="Small">
     <Sites>

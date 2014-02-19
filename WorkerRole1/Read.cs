@@ -19,19 +19,20 @@ namespace WorkerRole1
             // This is a sample worker implementation. Replace with your logic.
             Trace.TraceInformation("WorkerRole1 entry point called", "Information");
 
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("www.cnn.com");
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK &&
+                response.ContentLength > 0)
+            {
+                TextReader reader = new StreamReader(response.GetResponseStream());
+                string text = reader.ReadToEnd();
+                Console.Write(text);
+            }   
+
             while (true)
             {
                 Thread.Sleep(10000);
                 Trace.TraceInformation("Working", "Information");
-            }
-
-            HttpWebRequest request = (HttpWebRequest) WebRequest.Create("www.cnn.com");
-            HttpWebResponse response = (HttpWebResponse) request.GetResponse();
-            if (response.StatusCode == HttpStatusCode.OK &&
-                response.ContentLength > 0) {
-                TextReader reader = new StreamReader(response.GetResponseStream());
-                string text = reader.ReadToEnd();
-                Console.Write(text);
             }
         }
 
@@ -42,8 +43,6 @@ namespace WorkerRole1
 
             // For information on handling configuration changes
             // see the MSDN topic at http://go.microsoft.com/fwlink/?LinkId=166357.
-
-
 
             return base.OnStart();
 
