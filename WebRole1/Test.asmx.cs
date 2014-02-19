@@ -30,7 +30,6 @@ namespace WebRole1
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 List<string> synonyms = new List<string>();
-                StringBuilder data = new StringBuilder();
                 string line;
 
                 using (StreamReader reader = new StreamReader(response.GetResponseStream()))
@@ -40,7 +39,7 @@ namespace WebRole1
                     while ((line = reader.ReadLine()) != null)
                     {
                         var index = line.IndexOf("href=\"");
-
+                            
                         if (index > 0)
                         {
                             string temp;
