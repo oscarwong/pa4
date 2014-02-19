@@ -8,6 +8,7 @@ using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Diagnostics;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.WindowsAzure.Storage;
+using System.IO;
 
 namespace WorkerRole1
 {
@@ -22,6 +23,15 @@ namespace WorkerRole1
             {
                 Thread.Sleep(10000);
                 Trace.TraceInformation("Working", "Information");
+            }
+
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create("www.cnn.com");
+            HttpWebResponse response = (HttpWebResponse) request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK &&
+                response.ContentLength > 0) {
+                TextReader reader = new StreamReader(response.GetResponseStream());
+                string text = reader.ReadToEnd();
+                Console.Write(text);
             }
         }
 
