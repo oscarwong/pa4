@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Queue;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -23,6 +26,15 @@ namespace WebRole1
         [WebMethod]
         public string[] GetSynonyms(string word)
         {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
+            ConfigurationManager.ConnectionStrings["StorageConnectionString"].ConnectionString);
+
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            CloudQueue queue = queueClient.GetQueueReference("myqueue");
+            queue.CreateIfNotExists();
+
+            CloudQueueMessage message = new CloudQueueMessage("Hello, World");
+            queue.AddMessage(message);
             string url = string.Format("http://www.cnn.com");
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
