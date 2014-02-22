@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using Microsoft.WindowsAzure;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System;
 using System.Collections.Generic;
@@ -24,18 +25,24 @@ namespace WebRole1
     {
 
         [WebMethod]
-        public string[] GetSynonyms(string word)
-        {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
-            ConfigurationManager.ConnectionStrings["StorageConnectionString"].ConnectionString);
 
+        public string[] GetUrls()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference("myqueue");
+
+            CloudQueue queue = queueClient.GetQueueReference("unvisitedurls");
             queue.CreateIfNotExists();
 
-            CloudQueueMessage message = new CloudQueueMessage("Hello, World");
-            queue.AddMessage(message);
+            List<string> disallow = checkrobot();
+            HashSet<string> visited = new HashSet<string>();
+
             string url = string.Format("http://www.cnn.com");
+
+            if (disallow.Contains(url))
+            {
+                return null;
+            }
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -47,7 +54,6 @@ namespace WebRole1
                 using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                 {
 
-                    //we know that the synonyms is in the upper-part of the html stream so we do not want to read the entire stream.
                     while ((line = reader.ReadLine()) != null)
                     {
                         var index = line.IndexOf("href=\"");
@@ -63,24 +69,47 @@ namespace WebRole1
                                 link = line.Substring(index, endIndex);
                             }
                             if (link.StartsWith("/"))
-                                synonyms.Add("http://www.cnn.com" + link);
+                                visited.Add("http://www.cnn.com" + link);
                             else if (link.Contains(".cnn."))
-                                synonyms.Add(link);
+                                visited.Add(link);
                         }
 
-                        //break when we come to the Antonyms section of the page
                         if (line.Contains("</html>"))
                         {
                             break;
                         }
                     }
                 }
-                return synonyms.ToArray<string>();
+                return visited.ToArray<string>();
             }
             else
             {
                 return null;
             }
         }
+
+        public List<string> checkrobot()
+        {
+            string check = string.Format("http://www.cnn.com/robots.txt");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            List<string> disallow = new List<string>();
+            string line; 
+
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("Disallow:")) {
+                        int index = line.IndexOf("/");
+                        disallow.Add("http://www.cnn.com" + line.Substring(index));
+                    }
+                }
+            }
+
+            return disallow;
+        }
+
     }
 }
