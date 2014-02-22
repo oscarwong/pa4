@@ -40,17 +40,22 @@ namespace WebRole1
             
         }
 
+        [WebMethod]
         public void ClearIndex()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
             CloudQueue queue = queueClient.GetQueueReference("commands");
+            CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
+            unvisitedQueue.CreateIfNotExists();
             queue.CreateIfNotExists();
 
-            CloudQueueMessage message = queue.GetMessage();
-            message.SetMessageContent("false");
-            queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
+            //CloudQueueMessage message = queue.GetMessage();
+            //message.SetMessageContent("false");
+            //queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
+
+            unvisitedQueue.Delete();
         }
 
         [WebMethod]
@@ -62,6 +67,7 @@ namespace WebRole1
 
             string line;
 
+            List<string> disallow = checkrobot();
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
                 while ((line = reader.ReadLine()) != null)
@@ -69,13 +75,13 @@ namespace WebRole1
                     if (line.StartsWith("Sitemap:"))
                     {
                         int index = line.IndexOf("http://");
-                        crawlRobot(line.Substring(index));
+                        crawlRobot(line.Substring(index), disallow);
                     }
                 }
             }
         }
 
-        public void crawlRobot(string url)
+        public void crawlRobot(string url, List<string> disallow)
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
@@ -83,7 +89,7 @@ namespace WebRole1
             CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
             unvisitedQueue.CreateIfNotExists();
 
-            List<string> disallow = checkrobot();
+            
             string line; 
 
             string check = string.Format(url);
@@ -99,7 +105,7 @@ namespace WebRole1
                         int index = line.IndexOf("http://");
                         string capture = line.Substring(index);
                         int endIndex = capture.IndexOf("</loc>");
-                        crawlRobot(line.Substring(index, endIndex));
+                        crawlRobot(line.Substring(index, endIndex), disallow);
                     }
                     else if (line.Contains(".html"))
                     {
