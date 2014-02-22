@@ -21,12 +21,27 @@ namespace WebRole1
     {
 
         [WebMethod]
-        public static void StartCrawling(string status) {
+        public static void StartCrawling() {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
             CloudQueue queue = queueClient.GetQueueReference("commands");
             queue.CreateIfNotExists();
+
+            CloudQueueMessage message = new CloudQueueMessage("true");
+            queue.AddMessage(message);
+        }
+
+        public static void ClearIndex()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+
+            CloudQueue queue = queueClient.GetQueueReference("commands");
+            queue.CreateIfNotExists();
+
+            CloudQueueMessage message = new CloudQueueMessage("false");
+            queue.AddMessage(message);
         }
     }
 }
