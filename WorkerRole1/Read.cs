@@ -14,6 +14,8 @@ namespace WorkerRole1
 {
     public class Read : RoleEntryPoint
     {
+        HashSet<string> visited = new HashSet<string>();
+
         public override void Run()
         {
             // This is a sample worker implementation. Replace with your logic.
@@ -29,7 +31,6 @@ namespace WorkerRole1
             if (peekedMessage != null)
             {
                 status = Convert.ToBoolean(peekedMessage);
-                queue.DeleteMessage(peekedMessage);
             }
             else
             {
@@ -44,14 +45,13 @@ namespace WorkerRole1
                 if (newMessage != null)
                 {
                     status = Convert.ToBoolean(newMessage);
-                    queue.DeleteMessage(newMessage);
                     if (!status)
                     {
                         break;
                     }
                     else
                     {
-                        crawl();
+                        crawl("http://www.cnn.com/robots.txt");
                     }
                 }
 
@@ -72,10 +72,20 @@ namespace WorkerRole1
 
         }
 
-        public void crawl()
+        public string[] crawl(string url)
         {
             List<string> disallow = checkrobot();
-            HashSet<string> visited = new HashSet<string>();
+            string[] siteData = new string[3];
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+
+            CloudQueue queue = queueClient.GetQueueReference("unvisitedurls");
+
+            string visit = string.Format(url);
+
+            if (disallow.Contains(visit))
+                return null;
+
         }
 
         public List<string> checkrobot()
