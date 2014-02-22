@@ -91,7 +91,7 @@ namespace WorkerRole1
         public List<string> checkrobot()
         {
             string check = string.Format("http://www.cnn.com/robots.txt");
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check)
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
             List<string> disallow = new List<string>();

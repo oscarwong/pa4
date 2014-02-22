@@ -53,7 +53,29 @@ namespace WebRole1
             queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
         }
 
+        [WebMethod]
         public void initialRobot()
+        {
+            string check = string.Format("http://www.cnn.com/robots.txt");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            string line;
+
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("Sitemap:"))
+                    {
+                        int index = line.IndexOf("http://");
+                        crawlRobot(line.Substring(index));
+                    }
+                }
+            }
+        }
+
+        public void crawlRobot(string url)
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
@@ -61,18 +83,49 @@ namespace WebRole1
             CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
             unvisitedQueue.CreateIfNotExists();
 
-            string check = string.Format("http://www.cnn.com/robots.txt");
+            List<string> disallow = checkrobot();
+            string line; 
+
+            string check = string.Format(url);
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
-            List<string> disallow = checkrobot();
-            string line;
-
-            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            using (StreamReader reader = new StreamReader(response.GetResponseStream())) 
             {
                 while ((line = reader.ReadLine()) != null)
                 {
-
+                    if (line.Contains(".xml"))
+                    {
+                        int index = line.IndexOf("http://");
+                        string capture = line.Substring(index);
+                        int endIndex = capture.IndexOf("</loc>");
+                        crawlRobot(line.Substring(index, endIndex));
+                    }
+                    else if (line.Contains(".html"))
+                    {
+                        int index = line.IndexOf("http://");
+                        if (line.Contains(".cnn."))
+                        {
+                            string capture = line.Substring(index);
+                            int endIndex = capture.IndexOf("</loc>");
+                            string urlCapture = line.Substring(index, endIndex);
+                            foreach (string compare in disallow)
+                            {
+                                if (urlCapture.Contains(compare))
+                                    continue;
+                                else
+                                {
+                                    if (visited.Contains(urlCapture))
+                                    {
+                                        continue;
+                                    }
+                                    CloudQueueMessage message = new CloudQueueMessage(urlCapture);
+                                    unvisitedQueue.AddMessage(message);
+                                    visited.Add(urlCapture);
+                                }
+                            }                          
+                        }
+                    }
                 }
             }
         }
