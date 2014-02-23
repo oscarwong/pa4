@@ -37,7 +37,7 @@ namespace WebRole1
             List<string> disallow = checkrobot();
             HashSet<string> visited = new HashSet<string>();
 
-            string url = string.Format("http://www.cnn.com");
+            string url = string.Format("http://www.cnn.com/2014/02/23/justice/el-chapo-us-extradition/index.html?hpt=hp_t1");
 
             if (disallow.Contains(url))
             {
@@ -50,6 +50,8 @@ namespace WebRole1
             {
                 List<string> synonyms = new List<string>();
                 string line;
+                Boolean title = true;
+                Boolean publish = true;
 
                 using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                 {
@@ -57,6 +59,23 @@ namespace WebRole1
                     while ((line = reader.ReadLine()) != null)
                     {
                         var index = line.IndexOf("href=\"");
+                        Boolean hasTitle = line.Contains("<title>");
+                        Boolean hasDate = line.Contains("itemprop=\"datePublished\"");
+
+                        if (hasTitle && title)
+                        {
+                            string pageTitle = line.Substring(7);
+                            visited.Add(System.Web.HttpUtility.HtmlDecode(line.Substring(7, pageTitle.Length - 8)));
+                            title = false;
+                        }
+
+                        if (hasDate && publish)
+                        {
+                            string date = (line.Substring("<meta content=\"".Length));
+                            date = date.Substring(0, 10);
+                            visited.Add(date);
+                            publish = false;
+                        }
                             
                         if (index > 0)
                         {
@@ -104,6 +123,24 @@ namespace WebRole1
                     if (line.StartsWith("Disallow:")) {
                         int index = line.IndexOf("/");
                         disallow.Add("http://www.cnn.com" + line.Substring(index));
+                    }
+                }
+            }
+
+            check = string.Format("http://www.money.cnn.com/robots.txt");
+            request = (HttpWebRequest)WebRequest.Create(check);
+            response = (HttpWebResponse)request.GetResponse();
+
+            line = "";
+
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("Disallow:"))
+                    {
+                        int index = line.IndexOf("/");
+                        disallow.Add("http://money.cnn.com" + line.Substring(index));
                     }
                 }
             }

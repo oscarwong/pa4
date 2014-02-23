@@ -56,6 +56,9 @@ namespace WebRole1
             queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
 
             unvisitedQueue.Delete();
+
+            CloudQueue newqueue = queueClient.GetQueueReference("unvisitedurls");
+            newqueue.CreateIfNotExists();
         }
 
         [WebMethod]

@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using System.Configuration;
 using System.IO;
 using Microsoft.WindowsAzure.ServiceRuntime;
+using Microsoft.WindowsAzure.StorageClient;
 
 namespace WorkerRole1
 {
@@ -28,9 +29,12 @@ namespace WorkerRole1
             CloudQueue queue = queueClient.GetQueueReference("commands");
             CloudQueueMessage peekedMessage = queue.PeekMessage();
 
+            CloudQueue unreadurls = queueClient.GetQueueReference("unvisitedurls");
+            List<string> disallow = checkrobot();
+
             if (peekedMessage != null)
             {
-                status = Convert.ToBoolean(peekedMessage);
+                status = Convert.ToBoolean(peekedMessage.AsString);
             }
             else
             {
@@ -44,14 +48,34 @@ namespace WorkerRole1
 
                 if (newMessage != null)
                 {
-                    status = Convert.ToBoolean(newMessage);
+                    status = Convert.ToBoolean(newMessage.AsString);
                     if (!status)
                     {
                         break;
                     }
                     else
                     {
-                        crawl("http://www.cnn.com/robots.txt");
+                        CloudQueueMessage unread = unreadurls.PeekMessage();
+                        string url = unread.AsString;
+                        Boolean test = false;
+                        if (unread != null && !visited.Contains(url))
+                        {
+                            test = true;
+                            foreach (string prohibited in disallow)
+                            {
+                                if (url.StartsWith(prohibited))
+                                    test = false;
+                            }
+                        }
+                        if (!test)
+                        {
+                            CloudQueueMessage retrievedMessage = queue.GetMessage();
+                            unreadurls.DeleteMessage(retrievedMessage);
+                            continue;
+                        }
+                        visited.Add(url);
+                        string[] data = crawl(url, disallow);
+                        addToTable(data);
                     }
                 }
 
@@ -72,9 +96,14 @@ namespace WorkerRole1
 
         }
 
-        public string[] crawl(string url)
+        public void addToTable(string[] data)
         {
-            List<string> disallow = checkrobot();
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+        }
+
+        public string[] crawl(string url, List<string> disallow)
+        {
             string[] siteData = new string[3];
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
@@ -82,10 +111,63 @@ namespace WorkerRole1
             CloudQueue queue = queueClient.GetQueueReference("unvisitedurls");
 
             string visit = string.Format(url);
+            siteData[0] = url;
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                string line;
+                Boolean title = true;
+                Boolean publish = true;
 
-            if (disallow.Contains(visit))
-                return null;
+                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                {
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        var index = line.IndexOf("href=\"");
+                        Boolean hasTitle = line.Contains("<title>");
+                        Boolean hasDate = line.Contains("itemprop=\"datePublished\"");
 
+                        if (hasTitle && title)
+                        {
+                            string pageTitle = line.Substring(7);
+                            siteData[1] = (System.Web.HttpUtility.HtmlDecode(line.Substring(7, pageTitle.Length - 8)));
+                            title = false;
+                        }
+
+                        if (hasDate && publish)
+                        {
+                            string date = (line.Substring("<meta content=\"".Length));
+                            date = date.Substring(0, 10);
+                            siteData[2] = date;
+                            publish = false;
+                        }
+
+                        if (index > 0)
+                        {
+                            string temp;
+                            string link = "";
+                            index = index + "href=\"".Length;
+                            temp = line.Substring(index);
+                            var endIndex = temp.IndexOf("\"");
+                            if (endIndex > 0)
+                            {
+                                link = line.Substring(index, endIndex);
+                            }
+                            if (link.StartsWith("/"))
+                                visited.Add("http://www.cnn.com" + link);
+                            else if (link.Contains(".cnn."))
+                                visited.Add(link);
+                        }
+
+                        if (line.Contains("</html>"))
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+            return siteData;
         }
 
         public List<string> checkrobot()
