@@ -90,52 +90,59 @@ namespace WebRole1
             unvisitedQueue.CreateIfNotExists();
 
             
-            string line; 
+            string line;
 
-            string check = string.Format(url);
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
-            request.KeepAlive = false;
-            request.ProtocolVersion = HttpVersion.Version10;
-            request.ServicePoint.ConnectionLimit = 12;
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-            using (StreamReader reader = new StreamReader(response.GetResponseStream())) 
+            try
             {
-                while ((line = reader.ReadLine()) != null)
+                string check = string.Format(url);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+                request.KeepAlive = false;
+                request.ProtocolVersion = HttpVersion.Version10;
+                request.ServicePoint.ConnectionLimit = 24;
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                 {
-                    if (line.Contains(".xml"))
+                    while ((line = reader.ReadLine()) != null)
                     {
-                        int index = line.IndexOf("http://");
-                        string capture = line.Substring(index);
-                        int endIndex = capture.IndexOf("</loc>");
-                        crawlRobot(line.Substring(index, endIndex), disallow);
-                    }
-                    else if (line.Contains(".html"))
-                    {
-                        int index = line.IndexOf("http://");
-                        if (line.Contains(".cnn."))
+                        if (line.Contains(".xml"))
                         {
+                            int index = line.IndexOf("http://");
                             string capture = line.Substring(index);
                             int endIndex = capture.IndexOf("</loc>");
-                            string urlCapture = line.Substring(index, endIndex);
-                            foreach (string compare in disallow)
+                            crawlRobot(line.Substring(index, endIndex), disallow);
+                        }
+                        else if (line.Contains(".html"))
+                        {
+                            int index = line.IndexOf("http://");
+                            if (line.Contains(".cnn."))
                             {
-                                if (urlCapture.Contains(compare))
-                                    continue;
-                                else
+                                string capture = line.Substring(index);
+                                int endIndex = capture.IndexOf("</loc>");
+                                string urlCapture = line.Substring(index, endIndex);
+                                foreach (string compare in disallow)
                                 {
-                                    if (visited.Contains(urlCapture))
-                                    {
+                                    if (urlCapture.Contains(compare))
                                         continue;
+                                    else
+                                    {
+                                        if (visited.Contains(urlCapture))
+                                        {
+                                            continue;
+                                        }
+                                        CloudQueueMessage message = new CloudQueueMessage(urlCapture);
+                                        unvisitedQueue.AddMessage(message);
+                                        visited.Add(urlCapture);
                                     }
-                                    CloudQueueMessage message = new CloudQueueMessage(urlCapture);
-                                    unvisitedQueue.AddMessage(message);
-                                    visited.Add(urlCapture);
                                 }
-                            }                          
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to receive asset from '" + url + "': " + ex.Message, ex);
             }
         }
 
