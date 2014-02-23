@@ -51,9 +51,9 @@ namespace WebRole1
             unvisitedQueue.CreateIfNotExists();
             queue.CreateIfNotExists();
 
-            //CloudQueueMessage message = queue.GetMessage();
-            //message.SetMessageContent("false");
-            //queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
+            CloudQueueMessage message = queue.GetMessage();
+            message.SetMessageContent("false");
+            queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
 
             unvisitedQueue.Delete();
         }
@@ -94,6 +94,9 @@ namespace WebRole1
 
             string check = string.Format(url);
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 12;
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
             using (StreamReader reader = new StreamReader(response.GetResponseStream())) 
