@@ -9,7 +9,7 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using System.Configuration;
 using System.IO;
 using Microsoft.WindowsAzure.ServiceRuntime;
-using Microsoft.WindowsAzure.StorageClient;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace WorkerRole1
 {
@@ -100,6 +100,8 @@ namespace WorkerRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("urltable");
+            table.CreateIfNotExists();
         }
 
         public string[] crawl(string url, List<string> disallow)
