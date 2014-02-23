@@ -8,5 +8,6 @@ namespace WorkerRole1
 {
     class Crawl
     {
+        ;
     }
 }

@@ -21,7 +21,7 @@ namespace WebRole1
     // [System.Web.Script.Services.ScriptService]
     public class admin : System.Web.Services.WebService
     {
-        HashSet<string> visited = new HashSet<string>();
+        public HashSet<string> visited = new HashSet<string>();
 
         [WebMethod]
         public void StartCrawling() {
@@ -92,8 +92,7 @@ namespace WebRole1
             
             string line;
 
-            try
-            {
+
                 string check = string.Format(url);
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
                 request.KeepAlive = false;
@@ -103,26 +102,27 @@ namespace WebRole1
 
                 using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                 {
+
                     while ((line = reader.ReadLine()) != null)
                     {
-                        if (line.Contains(".xml"))
+                        try
                         {
-                            int index = line.IndexOf("http://");
-                            string capture = line.Substring(index);
-                            int endIndex = capture.IndexOf("</loc>");
-                            crawlRobot(line.Substring(index, endIndex), disallow);
-                        }
-                        else if (line.Contains(".html"))
-                        {
-                            int index = line.IndexOf("http://");
-                            if (line.Contains(".cnn."))
+                            if (line.Contains(".xml"))
                             {
+                                int index = line.IndexOf("http://");
+                                string capture = line.Substring(index);
+                                int endIndex = capture.IndexOf("</loc>");
+                                crawlRobot(line.Substring(index, endIndex), disallow);
+                            }
+                            else if (line.Contains(".html") && line.Contains(".cnn."))
+                            {
+                                int index = line.IndexOf("http://");
                                 string capture = line.Substring(index);
                                 int endIndex = capture.IndexOf("</loc>");
                                 string urlCapture = line.Substring(index, endIndex);
                                 foreach (string compare in disallow)
                                 {
-                                    if (urlCapture.Contains(compare))
+                                    if (urlCapture.StartsWith(compare))
                                         continue;
                                     else
                                     {
@@ -135,15 +135,15 @@ namespace WebRole1
                                         visited.Add(urlCapture);
                                     }
                                 }
+
                             }
+                        }
+                        catch (Exception e)
+                        {
+                            continue;
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to receive asset from '" + url + "': " + ex.Message, ex);
-            }
         }
 
         public List<string> checkrobot()
@@ -180,7 +180,7 @@ namespace WebRole1
                     if (line.StartsWith("Disallow:"))
                     {
                         int index = line.IndexOf("/");
-                        disallow.Add("http://www.money.cnn.com" + line.Substring(index));
+                        disallow.Add("http://money.cnn.com" + line.Substring(index));
                     }
                 }
             }
