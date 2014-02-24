@@ -76,6 +76,8 @@ namespace WorkerRole1
                         visited.Add(url);
                         string[] data = crawl(url, disallow);
                         addToTable(data);
+                        CloudQueueMessage deleteMessage = queue.GetMessage();
+                        unreadurls.DeleteMessage(deleteMessage);
                     }
                 }
 
@@ -102,6 +104,12 @@ namespace WorkerRole1
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference("urltable");
             table.CreateIfNotExists();
+            UrlTable entry = new UrlTable("CNN", data[0]);
+            entry.Title = data[1];
+            if (data[2] != null)
+                entry.Date = data[2];
+            else
+                entry.Date = "N/A";
         }
 
         public string[] crawl(string url, List<string> disallow)
@@ -111,9 +119,9 @@ namespace WorkerRole1
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
             CloudQueue queue = queueClient.GetQueueReference("unvisitedurls");
+            siteData[0] = url;
 
             string visit = string.Format(url);
-            siteData[0] = url;
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -175,7 +183,7 @@ namespace WorkerRole1
         public List<string> checkrobot()
         {
             string check = string.Format("http://www.cnn.com/robots.txt");
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check)
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
             List<string> disallow = new List<string>();
