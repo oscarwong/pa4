@@ -10,6 +10,7 @@ using System.Configuration;
 using System.IO;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.WindowsAzure.Storage.Table;
+using System.Web;
 
 namespace WorkerRole1
 {
@@ -84,7 +85,7 @@ namespace WorkerRole1
                         visited.Add(url);
                         string[] data = crawl(url, disallow);
                         addToTable(data);
-                        CloudQueueMessage deletemessage = queue.GetMessage();
+                        CloudQueueMessage deletemessage = unreadurls.GetMessage();
                         if (deletemessage != null)
                             unreadurls.DeleteMessage(deletemessage);
                         else
@@ -115,12 +116,14 @@ namespace WorkerRole1
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference("urltable");
             table.CreateIfNotExists();
-            UrlTable entry = new UrlTable("CNN", data[0]);
+            UrlTable entry = new UrlTable("CNN", HttpUtility.UrlEncode(data[0]));
             entry.Title = data[1];
             if (data[2] != null)
                 entry.Date = data[2];
             else
                 entry.Date = "N/A";
+            TableOperation insertOperation = TableOperation.Insert(entry);
+            table.Execute(insertOperation);
         }
 
         public string[] crawl(string url, List<string> disallow)
@@ -152,7 +155,7 @@ namespace WorkerRole1
                         if (hasTitle && title)
                         {
                             string pageTitle = line.Substring(7);
-                            siteData[1] = (System.Web.HttpUtility.HtmlDecode(line.Substring(7, pageTitle.Length - 8)));
+                            siteData[1] = (HttpUtility.HtmlDecode(line.Substring(7, pageTitle.Length - 8)));
                             title = false;
                         }
 
