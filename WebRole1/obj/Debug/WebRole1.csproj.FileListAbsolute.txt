@@ -209,4 +209,3 @@ C:\Users\iguest\Documents\PA3\WebRole1\bin\zh-Hans\System.Spatial.resources.dll
 C:\Users\iguest\Documents\PA3\WebRole1\bin\zh-Hant\System.Spatial.resources.dll
 C:\Users\iguest\Documents\PA3\WebRole1\obj\Debug\WebRole1.dll
 C:\Users\iguest\Documents\PA3\WebRole1\obj\Debug\WebRole1.pdb
-C:\Users\iguest\Documents\PA3\WebRole1\obj\Debug\WebRole1.csprojResolveAssemblyReference.cache

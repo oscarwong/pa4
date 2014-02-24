@@ -78,7 +78,7 @@ namespace WorkerRole1
                         }
                         if (!test)
                         {
-                            CloudQueueMessage retrievedmessage = queue.GetMessage();
+                            CloudQueueMessage retrievedmessage = unreadurls.GetMessage();
                             unreadurls.DeleteMessage(retrievedmessage);
                             continue;
                         }
@@ -122,7 +122,7 @@ namespace WorkerRole1
                 entry.Date = data[2];
             else
                 entry.Date = "N/A";
-            TableOperation insertOperation = TableOperation.Insert(entry);
+            TableOperation insertOperation = TableOperation.InsertOrReplace(entry);
             table.Execute(insertOperation);
         }
 
@@ -179,9 +179,15 @@ namespace WorkerRole1
                                 link = line.Substring(index, endIndex);
                             }
                             if (link.StartsWith("/"))
-                                visited.Add("http://www.cnn.com" + link);
+                            {
+                                CloudQueueMessage message = new CloudQueueMessage("http://www.cnn.com" + link);
+                                queue.AddMessage(message);
+                            }
                             else if (link.Contains(".cnn."))
-                                visited.Add(link);
+                            {
+                                CloudQueueMessage message = new CloudQueueMessage(link);
+                                queue.AddMessage(message);
+                            }      
                         }
 
                         if (line.Contains("</html>"))

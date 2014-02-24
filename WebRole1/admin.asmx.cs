@@ -21,7 +21,6 @@ namespace WebRole1
     // [System.Web.Script.Services.ScriptService]
     public class admin : System.Web.Services.WebService
     {
-        public HashSet<string> visited = new HashSet<string>();
 
         [WebMethod]
         public void StartCrawling() {
@@ -119,6 +118,7 @@ namespace WebRole1
                             }
                             else if (line.Contains(".html") && line.Contains(".cnn."))
                             {
+                                Boolean test = true;
                                 int index = line.IndexOf("http://");
                                 string capture = line.Substring(index);
                                 int endIndex = capture.IndexOf("</loc>");
@@ -126,19 +126,16 @@ namespace WebRole1
                                 foreach (string compare in disallow)
                                 {
                                     if (urlCapture.StartsWith(compare))
-                                        continue;
-                                    else
                                     {
-                                        if (visited.Contains(urlCapture))
-                                        {
-                                            continue;
-                                        }
-                                        CloudQueueMessage message = new CloudQueueMessage(urlCapture);
-                                        unvisitedQueue.AddMessage(message);
-                                        visited.Add(urlCapture);
-                                    }
+                                        test = false;
+                                        continue;
+                                    }                                       
                                 }
-
+                                if (test)
+                                {
+                                    CloudQueueMessage message = new CloudQueueMessage(urlCapture);
+                                    unvisitedQueue.AddMessage(message);
+                                }   
                             }
                         }
                         catch (Exception e)
@@ -188,6 +185,18 @@ namespace WebRole1
                 }
             }
             return disallow;
+        }
+
+        public int? getQueueLengeth()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+
+            CloudQueue queue = queueClient.GetQueueReference("unvisitedurls");
+
+            queue.FetchAttributes();
+
+            return queue.ApproximateMessageCount;
         }
     }
 }
