@@ -109,14 +109,14 @@ namespace WebRole1
                     {
                         try
                         {
-                            if (line.Contains(".xml"))
+                            if (line.Contains(".xml") && line.Contains("http://"))
                             {
                                 int index = line.IndexOf("http://");
                                 string capture = line.Substring(index);
                                 int endIndex = capture.IndexOf("</loc>");
                                 crawlRobot(line.Substring(index, endIndex), disallow);
                             }
-                            else if (line.Contains(".html") && line.Contains(".cnn."))
+                            else if (line.Contains(".html") && line.Contains(".cnn.") && line.Contains("http://"))
                             {
                                 Boolean test = true;
                                 int index = line.IndexOf("http://");
