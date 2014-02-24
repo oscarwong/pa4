@@ -25,6 +25,7 @@ namespace WebRole1
 
         [WebMethod]
         public void StartCrawling() {
+            initialRobot();
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
@@ -36,7 +37,6 @@ namespace WebRole1
 
             CloudQueueMessage message = new CloudQueueMessage("true");
             queue.AddMessage(message);
-
             
         }
 

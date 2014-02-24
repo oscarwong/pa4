@@ -44,11 +44,11 @@ namespace WorkerRole1
             while (status)
             {
                 Thread.Sleep(10000);
-                CloudQueueMessage newMessage = queue.PeekMessage();
+                CloudQueueMessage newmessage = queue.PeekMessage();
 
-                if (newMessage != null)
+                if (newmessage != null)
                 {
-                    status = Convert.ToBoolean(newMessage.AsString);
+                    status = Convert.ToBoolean(newmessage.AsString);
                     if (!status)
                     {
                         break;
@@ -56,7 +56,15 @@ namespace WorkerRole1
                     else
                     {
                         CloudQueueMessage unread = unreadurls.PeekMessage();
-                        string url = unread.AsString;
+                        string url;
+                        if (unread != null)
+                        {
+                            url = unread.AsString;
+                        }
+                        else
+                        {
+                            break;
+                        }
                         Boolean test = false;
                         if (unread != null && !visited.Contains(url))
                         {
@@ -69,15 +77,18 @@ namespace WorkerRole1
                         }
                         if (!test)
                         {
-                            CloudQueueMessage retrievedMessage = queue.GetMessage();
-                            unreadurls.DeleteMessage(retrievedMessage);
+                            CloudQueueMessage retrievedmessage = queue.GetMessage();
+                            unreadurls.DeleteMessage(retrievedmessage);
                             continue;
                         }
                         visited.Add(url);
                         string[] data = crawl(url, disallow);
                         addToTable(data);
-                        CloudQueueMessage deleteMessage = queue.GetMessage();
-                        unreadurls.DeleteMessage(deleteMessage);
+                        CloudQueueMessage deletemessage = queue.GetMessage();
+                        if (deletemessage != null)
+                            unreadurls.DeleteMessage(deletemessage);
+                        else
+                            break;
                     }
                 }
 
