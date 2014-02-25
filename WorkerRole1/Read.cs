@@ -171,6 +171,8 @@ namespace WorkerRole1
             CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
             unvisitedQueue.CreateIfNotExists();
 
+            CloudQueue error = queueClient.GetQueueReference("errors");
+            error.CreateIfNotExists();
 
             string line;
 
@@ -220,6 +222,8 @@ namespace WorkerRole1
                     }
                     catch (Exception e)
                     {
+                        CloudQueueMessage errormessage = new CloudQueueMessage(url);
+                        error.AddMessage(errormessage);
                         continue;
                     }
                 }
