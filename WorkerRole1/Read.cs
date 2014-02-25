@@ -29,6 +29,10 @@ namespace WorkerRole1
             CloudQueue queue = queueClient.GetQueueReference("commands");
             CloudQueue unreadurls = queueClient.GetQueueReference("unvisitedurls");
             unreadurls.CreateIfNotExists();
+            CloudQueue error = queueClient.GetQueueReference("errors");
+            error.CreateIfNotExists();
+            CloudQueue lastten = queueClient.GetQueueReference("lastTen");
+            lastten.CreateIfNotExists();
             List<string> disallow = checkrobot();
 
             string status = "false";
@@ -85,7 +89,18 @@ namespace WorkerRole1
                         continue;
                     }
                     visited.Add(url);
-                    string[] data = crawl(url, disallow);
+                    string[] data;
+                    try
+                    {
+                        data = crawl(url, disallow);
+                    }
+                    catch (Exception e)
+                    {
+                        CloudQueueMessage errormessage = new CloudQueueMessage(url);
+                        error.AddMessage(errormessage);
+                        continue;
+                    }
+                    
                     addToTable(data);
                     CloudQueueMessage deletemessage = unreadurls.GetMessage();
                     if (deletemessage != null)
@@ -349,7 +364,7 @@ namespace WorkerRole1
                     if (line.StartsWith("Disallow:"))
                     {
                         int index = line.IndexOf("/");
-                        disallow.Add("http://www.money.cnn.com" + line.Substring(index));
+                        disallow.Add("http://money.cnn.com" + line.Substring(index));
                     }
                 }
             }

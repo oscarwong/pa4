@@ -31,6 +31,12 @@ namespace WebRole1
             CloudQueue queue = queueClient.GetQueueReference("commands");
             queue.CreateIfNotExists();
 
+            CloudQueue error = queueClient.GetQueueReference("errors");
+            error.CreateIfNotExists();
+
+            CloudQueue lastten = queueClient.GetQueueReference("lastTen");
+            lastten.CreateIfNotExists();
+
             CloudQueueMessage message = new CloudQueueMessage("run");
             queue.AddMessage(message);
 
@@ -48,6 +54,19 @@ namespace WebRole1
 
             CloudQueue queue = queueClient.GetQueueReference("commands");
             queue.CreateIfNotExists();
+
+            CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
+            unvisitedQueue.CreateIfNotExists();
+
+            CloudQueue error = queueClient.GetQueueReference("errors");
+            error.CreateIfNotExists();
+
+            CloudQueue lastten = queueClient.GetQueueReference("lastTen");
+            lastten.CreateIfNotExists();
+
+            unvisitedQueue.Clear();
+            error.Clear();
+            lastten.Clear();
 
             CloudQueueMessage message = queue.GetMessage();
             message.SetMessageContent("false");
@@ -86,6 +105,9 @@ namespace WebRole1
 
             CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
             unvisitedQueue.CreateIfNotExists();
+
+            CloudQueue error = queueClient.GetQueueReference("errors");
+            error.CreateIfNotExists();
 
             
             string line;
@@ -136,6 +158,8 @@ namespace WebRole1
                         }
                         catch (Exception e)
                         {
+                            CloudQueueMessage errormessage = new CloudQueueMessage(url);
+                            error.AddMessage(errormessage);
                             continue;
                         }
                     }
