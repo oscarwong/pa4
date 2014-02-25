@@ -31,7 +31,7 @@ namespace WorkerRole1
             unreadurls.CreateIfNotExists();
             CloudQueue error = queueClient.GetQueueReference("errors");
             error.CreateIfNotExists();
-            CloudQueue lastten = queueClient.GetQueueReference("lastTen");
+            CloudQueue lastten = queueClient.GetQueueReference("lastten");
             lastten.CreateIfNotExists();
             List<string> disallow = checkrobot();
 
@@ -57,6 +57,8 @@ namespace WorkerRole1
                     if (unreadurls != null)
                     {
                         unreadurls.Clear();
+                        error.Clear();
+                        lastten.Clear();
                         deleteTable();
                     }
                 }
@@ -100,7 +102,15 @@ namespace WorkerRole1
                         error.AddMessage(errormessage);
                         continue;
                     }
-                    
+                    lastten.FetchAttributes();
+                    int? cachedMessageCount = lastten.ApproximateMessageCount;
+                    if (cachedMessageCount == 10)
+                    {
+                        CloudQueueMessage retrievedmessage = lastten.GetMessage();
+                        lastten.DeleteMessage(retrievedmessage);
+                    }
+                    CloudQueueMessage lasttenmessage = new CloudQueueMessage(url);
+                    lastten.AddMessage(lasttenmessage);
                     addToTable(data);
                     CloudQueueMessage deletemessage = unreadurls.GetMessage();
                     if (deletemessage != null)

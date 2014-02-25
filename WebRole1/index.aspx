@@ -12,5 +12,7 @@
         "hi"
     </div>
     </form>
+    <p>
+        <input id="Button1" type="button" value="button" /></p>
 </body>
 </html>

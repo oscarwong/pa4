@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Services;
+using WorkerRole1;
 
 namespace WebRole1
 {
@@ -34,7 +35,7 @@ namespace WebRole1
             CloudQueue error = queueClient.GetQueueReference("errors");
             error.CreateIfNotExists();
 
-            CloudQueue lastten = queueClient.GetQueueReference("lastTen");
+            CloudQueue lastten = queueClient.GetQueueReference("lastten");
             lastten.CreateIfNotExists();
 
             CloudQueueMessage message = new CloudQueueMessage("run");
@@ -61,7 +62,7 @@ namespace WebRole1
             CloudQueue error = queueClient.GetQueueReference("errors");
             error.CreateIfNotExists();
 
-            CloudQueue lastten = queueClient.GetQueueReference("lastTen");
+            CloudQueue lastten = queueClient.GetQueueReference("lastten");
             lastten.CreateIfNotExists();
 
             unvisitedQueue.Clear();
@@ -207,7 +208,8 @@ namespace WebRole1
             return disallow;
         }
 
-        public int? getQueueLengeth()
+        [WebMethod]
+        public int? getQueueLength()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
@@ -234,6 +236,16 @@ namespace WebRole1
                 return ((WorkerRole1.UrlTable)retrievedResult.Result).Title + " - Date published: " + ((WorkerRole1.UrlTable)retrievedResult.Result).Date;
             else
                 return "URL not found";
+        }
+
+        [WebMethod]
+        public int getTableLength()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("urltable");
+
+            table.
         }
     }
 }
