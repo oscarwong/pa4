@@ -23,74 +23,82 @@ namespace WorkerRole1
             // This is a sample worker implementation. Replace with your logic.
             Trace.TraceInformation("WorkerRole1 entry point called", "Information");
 
-            Boolean status = false;
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
             CloudQueue queue = queueClient.GetQueueReference("commands");
-            CloudQueueMessage peekedMessage = queue.PeekMessage();
-
             CloudQueue unreadurls = queueClient.GetQueueReference("unvisitedurls");
+            unreadurls.CreateIfNotExists();
             List<string> disallow = checkrobot();
 
-            if (peekedMessage != null)
-            {
-                status = Convert.ToBoolean(peekedMessage.AsString);
-            }
-            else
-            {
-                status = false;
-            }
+            string status = "false";
+           
 
-            while (status)
+            while (true)
             {
-                Thread.Sleep(10000);
-                CloudQueueMessage newmessage = queue.PeekMessage();
+                Thread.Sleep(500);
+                CloudQueueMessage peekedMessage = queue.PeekMessage();
 
-                if (newmessage != null)
+                if (peekedMessage != null)
                 {
-                    status = Convert.ToBoolean(newmessage.AsString);
-                    if (!status)
+                    status = peekedMessage.AsString;
+                }
+                else
+                {
+                    status = "false";
+                }
+
+                if (status == "false")
+                {
+                    if (unreadurls != null)
                     {
-                        break;
+                        unreadurls.Clear();
+                        deleteTable();
+                    }
+                }
+                else if (status == "run")
+                {
+                    CloudQueueMessage unread = unreadurls.PeekMessage();
+                    string url;
+                    if (unread != null)
+                    {
+                        url = unread.AsString;
                     }
                     else
                     {
-                        CloudQueueMessage unread = unreadurls.PeekMessage();
-                        string url;
-                        if (unread != null)
-                        {
-                            url = unread.AsString;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                        Boolean test = false;
-                        if (unread != null && !visited.Contains(url))
-                        {
-                            test = true;
-                            foreach (string prohibited in disallow)
-                            {
-                                if (url.StartsWith(prohibited))
-                                    test = false;
-                            }
-                        }
-                        if (!test)
-                        {
-                            CloudQueueMessage retrievedmessage = unreadurls.GetMessage();
-                            unreadurls.DeleteMessage(retrievedmessage);
-                            continue;
-                        }
-                        visited.Add(url);
-                        string[] data = crawl(url, disallow);
-                        addToTable(data);
-                        CloudQueueMessage deletemessage = unreadurls.GetMessage();
-                        if (deletemessage != null)
-                            unreadurls.DeleteMessage(deletemessage);
-                        else
-                            break;
+                        break;
                     }
+                    Boolean test = false;
+                    if (unread != null && !visited.Contains(url))
+                    {
+                        test = true;
+                        foreach (string prohibited in disallow)
+                        {
+                            if (url.StartsWith(prohibited))
+                                test = false;
+                        }
+                    }
+                    if (!test)
+                    {
+                        CloudQueueMessage retrievedmessage = unreadurls.GetMessage();
+                        unreadurls.DeleteMessage(retrievedmessage);
+                        continue;
+                    }
+                    visited.Add(url);
+                    string[] data = crawl(url, disallow);
+                    addToTable(data);
+                    CloudQueueMessage deletemessage = unreadurls.GetMessage();
+                    if (deletemessage != null)
+                        unreadurls.DeleteMessage(deletemessage);
+                    else
+                        break;
+                }
+                else if (status == "start")
+                {
+                    initialRobot();
+                    CloudQueueMessage message = queue.GetMessage();
+                    message.SetMessageContent("run");
+                    queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
                 }
 
                 Trace.TraceInformation("Working", "Information");
@@ -106,8 +114,114 @@ namespace WorkerRole1
             // see the MSDN topic at http://go.microsoft.com/fwlink/?LinkId=166357.
 
             return base.OnStart();
+        }
+
+        public void initialRobot()
+        {
+            string check = string.Format("http://www.cnn.com/robots.txt");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            string line;
+
+            List<string> disallow = checkrobot();
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("Sitemap:"))
+                    {
+                        int index = line.IndexOf("http://");
+                        crawlRobot(line.Substring(index), disallow);
+                    }
+                }
+            }
+        }
+
+        public void crawlRobot(string url, List<string> disallow)
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+
+            CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
+            unvisitedQueue.CreateIfNotExists();
 
 
+            string line;
+
+
+            string check = string.Format(url);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(check);
+            request.KeepAlive = false;
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.ServicePoint.ConnectionLimit = 24;
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+            {
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    try
+                    {
+                        if (line.Contains(".xml") && line.Contains("http://"))
+                        {
+                            int index = line.IndexOf("http://");
+                            string capture = line.Substring(index);
+                            int endIndex = capture.IndexOf("</loc>");
+                            crawlRobot(line.Substring(index, endIndex), disallow);
+                        }
+                        else if (line.Contains(".html") && line.Contains(".cnn.") && line.Contains("http://"))
+                        {
+                            Boolean test = true;
+                            int index = line.IndexOf("http://");
+                            string capture = line.Substring(index);
+                            int endIndex = capture.IndexOf("</loc>");
+                            string urlCapture = line.Substring(index, endIndex);
+                            foreach (string compare in disallow)
+                            {
+                                if (urlCapture.StartsWith(compare))
+                                {
+                                    test = false;
+                                    continue;
+                                }
+                            }
+                            if (test)
+                            {
+                                CloudQueueMessage message = new CloudQueueMessage(urlCapture);
+                                unvisitedQueue.AddMessage(message);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        public void deleteTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("urltable");
+
+            TableQuery<UrlTable> query = new TableQuery<UrlTable>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "CNN"));
+
+            foreach (UrlTable entity in table.ExecuteQuery(query))
+            {
+                if (entity != null)
+                {
+                    TableOperation deleteOperation = TableOperation.Delete(entity);
+
+                    table.Execute(deleteOperation);
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
 
         public void addToTable(string[] data)
@@ -150,12 +264,13 @@ namespace WorkerRole1
                     {
                         var index = line.IndexOf("href=\"");
                         Boolean hasTitle = line.Contains("<title>");
-                        Boolean hasDate = line.Contains("itemprop=\"datePublished\"");
+                        Boolean hasDate = (line.Contains("itemprop=\"datePublished\"") && line.Contains("content=\""));
 
                         if (hasTitle && title)
                         {
-                            string pageTitle = line.Substring(7);
-                            siteData[1] = (HttpUtility.HtmlDecode(line.Substring(7, pageTitle.Length - 8)));
+                            string pageTitle = line.Substring(line.IndexOf("<title>"));
+                            pageTitle = pageTitle.Substring(7);
+                            siteData[1] = (HttpUtility.HtmlDecode(pageTitle.Substring(0, pageTitle.Length - 8)));
                             title = false;
                         }
 
@@ -167,7 +282,7 @@ namespace WorkerRole1
                             publish = false;
                         }
 
-                        if (index > 0)
+                        if (index > 0 && !line.Contains(".xml"))
                         {
                             string temp;
                             string link = "";

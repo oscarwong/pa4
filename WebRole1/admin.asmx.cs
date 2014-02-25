@@ -1,5 +1,6 @@
 ﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
+using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -24,19 +25,19 @@ namespace WebRole1
 
         [WebMethod]
         public void StartCrawling() {
-            initialRobot();
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
             CloudQueue queue = queueClient.GetQueueReference("commands");
             queue.CreateIfNotExists();
 
+            CloudQueueMessage message = new CloudQueueMessage("run");
+            queue.AddMessage(message);
+
             CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
             unvisitedQueue.CreateIfNotExists();
 
-            CloudQueueMessage message = new CloudQueueMessage("true");
-            queue.AddMessage(message);
-            
+            initialRobot();
         }
 
         [WebMethod]
@@ -46,18 +47,13 @@ namespace WebRole1
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
             CloudQueue queue = queueClient.GetQueueReference("commands");
-            CloudQueue unvisitedQueue = queueClient.GetQueueReference("unvisitedurls");
-            unvisitedQueue.CreateIfNotExists();
             queue.CreateIfNotExists();
 
             CloudQueueMessage message = queue.GetMessage();
             message.SetMessageContent("false");
             queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
 
-            unvisitedQueue.Delete();
-
-            CloudQueue newqueue = queueClient.GetQueueReference("unvisitedurls");
-            newqueue.CreateIfNotExists();
+            queue.DeleteMessage(message);
         }
 
         [WebMethod]
@@ -197,6 +193,23 @@ namespace WebRole1
             queue.FetchAttributes();
 
             return queue.ApproximateMessageCount;
+        }
+
+        [WebMethod]
+        public string getInfo(string url)
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("urltable");
+
+            TableOperation retrieveOperation = TableOperation.Retrieve<WorkerRole1.UrlTable>("CNN", HttpUtility.UrlEncode(url));
+
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+
+            if (retrievedResult.Result != null)
+                return ((WorkerRole1.UrlTable)retrievedResult.Result).Title + " - Date published: " + ((WorkerRole1.UrlTable)retrievedResult.Result).Date;
+            else
+                return "URL not found";
         }
     }
 }
