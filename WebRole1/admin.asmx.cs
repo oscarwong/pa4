@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
+using System.Web.Script.Services;
 using System.Web.Services;
 using WorkerRole1;
 
@@ -21,6 +22,7 @@ namespace WebRole1
     [System.ComponentModel.ToolboxItem(false)]
     // To allow this Web Service to be called from script, using ASP.NET AJAX, uncomment the following line. 
     // [System.Web.Script.Services.ScriptService]
+    [ScriptService]
     public class admin : System.Web.Services.WebService
     {
 
@@ -140,13 +142,29 @@ namespace WebRole1
 
             CloudQueueMessage peekedMessage = queue.PeekMessage();
 
-            status = peekedMessage.AsString;
-            if (status == "run")
-                return "The bot is currently crawling the website.";
-            else if (status == "start")
-                return "The bot is currently initializing and crawling the sitemap. Please wait another 7-10 hours.";
+            if (peekedMessage == null)
+                status = "stop";
             else
-                return "The bot is currently stopped.";
+                status = peekedMessage.AsString;
+            if (status == "run")
+                return "crawling the website.";
+            else if (status == "start")
+                return "initializing and crawling the sitemap. Please wait another 7-10 hours.";
+            else
+                return "stopped.";
+        }
+
+        [WebMethod]
+        public int? getErrorSize()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+
+            CloudQueue queue = queueClient.GetQueueReference("errors");
+
+            queue.FetchAttributes();
+
+            return queue.ApproximateMessageCount;
         }
     }
 }

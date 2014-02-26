@@ -100,7 +100,6 @@
   <ItemGroup>
     <Content Include="admin.asmx" />
     <Content Include="dashboard.asmx" />
-    <Content Include="Dashboard.html" />
     <Content Include="packages.config" />
     <Content Include="index.aspx" />
     <None Include="Web.Debug.config">
@@ -128,9 +127,6 @@
     <Compile Include="index.aspx.cs">
       <DependentUpon>index.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="index.aspx.designer.cs">
-      <DependentUpon>index.aspx</DependentUpon>
     </Compile>
     <Compile Include="UrlTable.cs" />
   </ItemGroup>
