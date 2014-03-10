@@ -115,10 +115,14 @@ namespace WebRole1
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference("urltable");
 
-            CloudTableQuery<WorkerRole1.UrlTable> partitionQuery =
-                (from e in table.CreateQuery<WorkerRole1.UrlTable>("urltable")
-                 where e.PartitionKey == keyword
-                 select e).AsTableServiceQuery<WorkerRole1.UrlTable>();
+            TableQuery<WorkerRole1.UrlTable> query = new TableQuery<UrlTable>().Where
+                (TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, keyword));
+
+            foreach (WorkerRole1.UrlTable entity in table.ExecuteQuery(query))
+            {
+                answer.Add(entity.Title, entity.RowKey);
+            }
+            return answer;
         }
 
         [WebMethod]
