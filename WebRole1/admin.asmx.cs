@@ -1,6 +1,7 @@
 ﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.WindowsAzure.Storage.Table.DataServices;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -104,6 +105,20 @@ namespace WebRole1
                 return ((WorkerRole1.UrlTable)retrievedResult.Result).Title + " - Date published: " + ((WorkerRole1.UrlTable)retrievedResult.Result).Date;
             else
                 return "URL not found";
+        }
+
+        [WebMethod]
+        public Dictionary<string, string> findKeyword(string keyword)
+        {
+            Dictionary<string, string> answer = new Dictionary<string, string>();
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("urltable");
+
+            CloudTableQuery<WorkerRole1.UrlTable> partitionQuery =
+                (from e in table.CreateQuery<WorkerRole1.UrlTable>("urltable")
+                 where e.PartitionKey == keyword
+                 select e).AsTableServiceQuery<WorkerRole1.UrlTable>();
         }
 
         [WebMethod]

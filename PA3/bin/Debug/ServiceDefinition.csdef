@@ -18,7 +18,7 @@
     </ConfigurationSettings>
     <Contents>
       <Content destination=".\">
-        <SourceDirectory path="C:\Users\iguest\Documents\PA3\PA3\rcf\Debug\WorkerRole1Content\" />
+        <SourceDirectory path="C:\Users\iguest\Documents\pa4\PA3\rcf\Debug\WorkerRole1Content\" />
       </Content>
     </Contents>
   </WorkerRole>
@@ -41,7 +41,7 @@
     </ConfigurationSettings>
     <Contents>
       <Content destination=".\">
-        <SourceDirectory path="C:\Users\iguest\Documents\PA3\PA3\rcf\Debug\WebRole1Content\" />
+        <SourceDirectory path="C:\Users\iguest\Documents\pa4\PA3\rcf\Debug\WebRole1Content\" />
       </Content>
     </Contents>
   </WebRole>

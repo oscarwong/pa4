@@ -120,7 +120,7 @@ namespace WorkerRole1
                 }
                 else if (status == "start")
                 {
-                    initialRobot();
+                    //initialRobot();
                     CloudQueueMessage message = queue.GetMessage();
                     message.SetMessageContent("run");
                     queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
@@ -259,14 +259,25 @@ namespace WorkerRole1
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference("urltable");
             table.CreateIfNotExists();
-            UrlTable entry = new UrlTable("CNN", HttpUtility.UrlEncode(data[0]));
-            entry.Title = data[1];
-            if (data[2] != null)
-                entry.Date = data[2];
-            else
-                entry.Date = "N/A";
-            TableOperation insertOperation = TableOperation.InsertOrReplace(entry);
-            table.Execute(insertOperation);
+
+            string[] split = data[1].Split(new Char[] { ' ', ',', ':', ';', '-', '\'' });
+            foreach (string s in split)
+            {
+                if (s.Trim() != "")
+                {
+                    UrlTable entry = new UrlTable(s.ToLower(), HttpUtility.UrlEncode(data[0]));
+                    entry.Title = data[1];
+                    if (data[2] != null)
+                        entry.Date = data[2];
+                    else
+                        entry.Date = "N/A";
+                    TableOperation insertOperation = TableOperation.InsertOrReplace(entry);
+                    try {
+                        table.Execute(insertOperation);
+                    } catch (Exception e) 
+                    {}
+                }
+            }
         }
 
         public string[] crawl(string url, List<string> disallow)
@@ -299,7 +310,8 @@ namespace WorkerRole1
                         {
                             string pageTitle = line.Substring(line.IndexOf("<title>"));
                             pageTitle = pageTitle.Substring(7);
-                            siteData[1] = (HttpUtility.HtmlDecode(pageTitle.Substring(0, pageTitle.Length - 8)));
+                            int end = pageTitle.IndexOf("- CNN");
+                            siteData[1] = (pageTitle.Substring(0, end));
                             title = false;
                         }
 
