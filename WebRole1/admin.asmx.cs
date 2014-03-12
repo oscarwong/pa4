@@ -26,6 +26,7 @@ namespace WebRole1
     [ScriptService]
     public class admin : System.Web.Services.WebService
     {
+        private static Dictionary<string, List<string>> cache = new Dictionary<string, List<string>>();
 
         [WebMethod]
         public void StartCrawling() {
@@ -108,21 +109,35 @@ namespace WebRole1
         }
 
         [WebMethod]
-        public Dictionary<string, string> findKeyword(string keyword)
+        public List<string> findKeyword(string keyword)
         {
-            Dictionary<string, string> answer = new Dictionary<string, string>();
+            keyword = keyword.ToLower();
+            if (cache.ContainsKey(keyword))
+                return cache[keyword];
+            List<string> answer = new List<string>();
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference("urltable");
 
             TableQuery<WorkerRole1.UrlTable> query = new TableQuery<UrlTable>().Where
                 (TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, keyword));
-
+                
             foreach (WorkerRole1.UrlTable entity in table.ExecuteQuery(query))
             {
-                answer.Add(entity.Title, entity.RowKey);
+                answer.Add(HttpUtility.UrlDecode(entity.RowKey));
             }
-            return answer;
+
+            if (answer.Count > 0)
+            {
+                cache.Add(keyword, answer);
+                return answer;
+            }
+            else
+            {
+                answer.Add("Keyword not found");
+                cache.Add(keyword, answer);
+                return answer;
+            }
         }
 
         [WebMethod]

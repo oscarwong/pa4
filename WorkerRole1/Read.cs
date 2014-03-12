@@ -311,7 +311,10 @@ namespace WorkerRole1
                             string pageTitle = line.Substring(line.IndexOf("<title>"));
                             pageTitle = pageTitle.Substring(7);
                             int end = pageTitle.IndexOf("- CNN");
-                            siteData[1] = (pageTitle.Substring(0, end));
+                            if (end > 0)
+                                siteData[1] = (pageTitle.Substring(0, end));
+                            else
+                                siteData[1] = ((pageTitle.Substring(0, pageTitle.Length - 8)));
                             title = false;
                         }
 
