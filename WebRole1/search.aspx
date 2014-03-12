@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
     <meta charset="utf-8">
     <title>Oscar's search interface</title>
-    <script type="text/javascript>
+    <script type="text/javascript">
         function testJson() {
             var userinput = $("#input").val();
             $.ajax({
@@ -26,7 +26,7 @@
             });
         };
 
-         function callback(data) {
+        function callback(data) {
             alert("callback");
             $('#result1').html(JSON.stringify(data));
         };
@@ -47,13 +47,6 @@
                 }
             });
         };
-
-        function autocomplete(data) {
-            var availableTags = data.d;
-            $("#tags").autocomplete({
-                source: availableTags
-            });
-        };
     </script>
     <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
 </head>
@@ -63,7 +56,7 @@
             <div class="input-group">
                 <input type="text" class="form-control" name="input" id="input" value="" onkeyup="testJson()" />
                 <span class="input-group-btn">
-                    <button class="btn btn-default" type="button" onclick="testJson();getjson();">Go!</button>
+                    <button class="btn btn-default" type="button" onclick="getjson();">Go!</button>
                 </span>
             </div>
         </div>
