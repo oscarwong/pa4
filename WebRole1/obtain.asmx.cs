@@ -45,8 +45,8 @@ namespace WebRole1
             {
                 while ((line = sr.ReadLine()) != null)
                 {
-                    float count = this.theMemCounter.NextValue();
-                    if (this.theMemCounter.NextValue() > 9000)
+                    var count = this.theMemCounter.NextValue();
+                    if (count < 900f)
                         break;
                     trie.insertWord(line);
                 }
