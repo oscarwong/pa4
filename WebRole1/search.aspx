@@ -12,7 +12,7 @@
             var userinput = $("#input").val();
             $.ajax({
                 type: "POST",
-                url: "obtain.asmx/read",
+                url: "obtain.asmx/Read",
                 data: '{_userinput:"' + userinput + '"}',
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",

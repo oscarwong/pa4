@@ -3,6 +3,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -25,6 +26,7 @@ namespace WebRole1
     {
 
         public static Trie trie = new Trie();
+        private PerformanceCounter theMemCounter = new PerformanceCounter("Memory", "Available MBytes");
 
         [WebMethod]
         public void GetStorage()
@@ -41,15 +43,12 @@ namespace WebRole1
             string line = null;
             using (StreamReader sr = new StreamReader(blob2.OpenRead()))
             {
-                try
+                while ((line = sr.ReadLine()) != null)
                 {
-                    while ((line = sr.ReadLine()) != null)
-                    {
-                        trie.insertWord(line);
-                    }
-                }
-                catch (Exception e)
-                {
+                    float count = this.theMemCounter.NextValue();
+                    if (this.theMemCounter.NextValue() > 9000)
+                        break;
+                    trie.insertWord(line);
                 }
             }
         }
