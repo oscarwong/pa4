@@ -9,8 +9,8 @@
     <AzureEnableRemoteDesktop>True</AzureEnableRemoteDesktop>
     <AzureEnableWebDeploy>False</AzureEnableWebDeploy>
     <AzureFallbackToDeleteAndRecreateIfUpgradeFails>False</AzureFallbackToDeleteAndRecreateIfUpgradeFails>
-    <AzureHostedServiceLabel>oscarpa3</AzureHostedServiceLabel>
-    <AzureHostedServiceName>oscarpa3</AzureHostedServiceName>
+    <AzureHostedServiceLabel>oscarpa4</AzureHostedServiceLabel>
+    <AzureHostedServiceName>oscarpa4</AzureHostedServiceName>
     <AzureEnableIntelliTrace>False</AzureEnableIntelliTrace>
     <AzureEnableProfiling>False</AzureEnableProfiling>
     <AzureServiceConfiguration>Cloud</AzureServiceConfiguration>
