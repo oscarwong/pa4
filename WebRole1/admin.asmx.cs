@@ -29,7 +29,8 @@ namespace WebRole1
         private static Dictionary<string, List<string>> cache = new Dictionary<string, List<string>>();
 
         [WebMethod]
-        public void StartCrawling() {
+        public void StartCrawling()
+        {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
 
@@ -143,6 +144,8 @@ namespace WebRole1
 
             foreach (WorkerRole1.UrlTable entity in table.ExecuteQuery(query))
             {
+                if (answer.Contains(HttpUtility.UrlDecode(entity.RowKey)))
+                    continue;
                 answer.Add(HttpUtility.UrlDecode(entity.RowKey));
             }
             return answer;
@@ -209,84 +212,5 @@ namespace WebRole1
             return queue.ApproximateMessageCount;
         }
 
-        [WebMethod]
-        public List<string> crawl(string url)
-        {
-            List<string> siteData = new List<string>();
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
-            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-
-            CloudQueue queue = queueClient.GetQueueReference("unvisitedurls");
-            siteData.Add(url);
-
-            string visit = string.Format(url);
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                string line;
-                Boolean title = true;
-                Boolean publish = true;
-
-                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                {
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        var index = line.IndexOf("href=\"");
-                        Boolean hasTitle = line.Contains("<title>");
-                        Boolean hasDate = (line.Contains("itemprop=\"datePublished\"") && line.Contains("content=\""));
-
-                        if (hasTitle && title)
-                        {
-                            string pageTitle = line.Substring(line.IndexOf("<title>"));
-                            pageTitle = pageTitle.Substring(7);
-                            int end = pageTitle.IndexOf("- CNN");
-                            if (end > 0)
-                                siteData.Add(pageTitle.Substring(0, end));
-                            else
-                                siteData.Add((pageTitle.Substring(0, pageTitle.Length - 8)));
-                            title = false;
-                        }
-
-                        if (hasDate && publish)
-                        {
-                            string date = (line.Substring("<meta content=\"".Length));
-                            date = date.Substring(0, 10);
-                            siteData.Add(date);
-                            publish = false;
-                        }
-
-                        if (index > 0 && !line.Contains(".xml"))
-                        {
-                            string temp;
-                            string link = "";
-                            index = index + "href=\"".Length;
-                            temp = line.Substring(index);
-                            var endIndex = temp.IndexOf("\"");
-                            if (endIndex > 0)
-                            {
-                                link = line.Substring(index, endIndex);
-                            }
-                            if (link.StartsWith("/"))
-                            {
-                                CloudQueueMessage message = new CloudQueueMessage("http://www.cnn.com" + link);
-                                queue.AddMessage(message);
-                            }
-                            else if (link.Contains(".cnn."))
-                            {
-                                CloudQueueMessage message = new CloudQueueMessage(link);
-                                queue.AddMessage(message);
-                            }
-                        }
-
-                        if (line.Contains("</html>"))
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-            return siteData;
-        }
     }
 }

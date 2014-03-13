@@ -50,11 +50,13 @@
         });
 
         function callback(data) {
-            $('#result1').html(JSON.stringify(data));
+            $('.container1').append("<div>" + JSON.stringify(data[1])+ "/<div>");
         };
 
         function getjson() {
             var userinput = $("#input").val();
+            $(".container").empty();
+            $(".container1").empty();
             $.ajax({
                 type: "POST",
                 url: "http://ec2-54-186-72-122.us-west-2.compute.amazonaws.com/player.php",
@@ -79,7 +81,7 @@
         function infoSuccess(result)
         {
             $.each(result, function (index, value) {
-                if (result[index] = "Keyword not found") {
+                if (result[index] === "Keyword not found") {
                     $('.container').append("<div>Result not found</div>");
                 } else {
                     $('.container').append("<div><a href=\"" + result[index] + "\">" + result[index] + "</a></div>");
@@ -110,13 +112,11 @@
 
     <div class="row">
         <div class="col-md-offset-2 col-md-5 container">
-            <div id="result"></div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-offset-5 col-md-5 container1">
-            <div id="result1"></div>
         </div>
     </div>
 
