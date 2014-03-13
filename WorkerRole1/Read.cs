@@ -252,22 +252,27 @@ namespace WorkerRole1
             CloudTable table = tableClient.GetTableReference("urltable");
             table.CreateIfNotExists();
 
-            string[] split = data[1].Split(new Char[] { ' ', ',', ':', ';', '-', '\'' });
-            foreach (string s in split)
+            if (data[1] != null)
             {
-                if (s.Trim() != "")
+                string[] split = data[1].Split(new Char[] { ' ', ',', ':', ';', '-', '\'' });
+                foreach (string s in split)
                 {
-                    UrlTable entry = new UrlTable(s.ToLower(), HttpUtility.UrlEncode(data[0]));
-                    entry.Title = data[1];
-                    if (data[2] != null)
-                        entry.Date = data[2];
-                    else
-                        entry.Date = "N/A";
-                    TableOperation insertOperation = TableOperation.InsertOrReplace(entry);
-                    try {
-                        table.Execute(insertOperation);
-                    } catch (Exception e) 
-                    {}
+                    if (s.Trim() != "")
+                    {
+                        UrlTable entry = new UrlTable(s.ToLower(), HttpUtility.UrlEncode(data[0]));
+                        entry.Title = data[1];
+                        if (data[2] != null)
+                            entry.Date = data[2];
+                        else
+                            entry.Date = "N/A";
+                        TableOperation insertOperation = TableOperation.InsertOrReplace(entry);
+                        try
+                        {
+                            table.Execute(insertOperation);
+                        }
+                        catch (Exception e)
+                        { }
+                    }
                 }
             }
         }

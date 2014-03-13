@@ -68,6 +68,24 @@
                 }
             });
         };
+
+        function getInfo()
+        {
+            $(".container").empty();
+            var keyword = $("#input").val();
+            WebRole1.admin.findKeyword(keyword, infoSuccess);
+        }
+
+        function infoSuccess(result)
+        {
+            $.each(result, function (index, value) {
+                if (result[index] = "Keyword not found") {
+                    $('.container').append("<div>Result not found</div>");
+                } else {
+                    $('.container').append("<div><a href=\"" + result[index] + "\">" + result[index] + "</a></div>");
+                }
+            });
+        }
     </script>
 </head>
 <body>
@@ -75,14 +93,15 @@
         <asp:ScriptManager runat="server" ID="scriptManager">
             <Services>
                 <asp:ServiceReference path="obtain.asmx" />
+                <asp:ServiceReference Path="admin.asmx" />
             </Services>
         </asp:ScriptManager>
         <div class="row">
             <div class="col-lg-6 col-lg-offset-3">
                 <div class="input-group">
-                    <input type="text" class="form-control" name="input" id="input" value="Search here..."/>
+                    <input type="text" class="form-control" name="input" id="input" placeholder="Search here..."/>
                     <span class="input-group-btn">
-                        <button class="btn btn-default" type="button" onclick="getjson()">Go!</button>
+                        <button class="btn btn-default" type="button" onclick="getInfo();getjson()">Go!</button>
                     </span>
                 </div>
             </div>
@@ -90,17 +109,18 @@
     </form>
 
     <div class="row">
-        <div class="col-md-2 col-md-offset-5 container">
+        <div class="col-md-offset-2 col-md-5 container">
             <div id="result"></div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-2 col-md-offset-5 container">
+        <div class="col-md-offset-5 col-md-5 container1">
             <div id="result1"></div>
         </div>
     </div>
 
+    <script type='text/javascript' src='http://ads1.qadabra.com/t?id=579ac763-00a2-4fd1-b55a-e9557bd09af3&size=120x600'></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
 </body>
 </html>
