@@ -50,7 +50,30 @@
         });
 
         function callback(data) {
-            $('.container1').append("<div>" + JSON.stringify(data[1])+ "/<div>");
+            var name = JSON.stringify(data[1]);
+            name = name.replace(/\"/g, "");
+            name = name.replace(/\//g, '');
+
+            var gp = JSON.stringify(data[2]);
+            gp = gp.replace(/\"/g, "");
+            gp = gp.replace(/\//g, '');
+
+            var fgp = JSON.stringify(data[3]);
+            fgp = fgp.replace(/\"/g, "");
+            fgp = fgp.replace(/\//g, '');
+
+            var tpp = JSON.stringify(data[4]);
+            tpp = tpp.replace(/\"/g, "");
+            tpp = tpp.replace(/\//g, '');
+
+            var ftp = JSON.stringify(data[5]);
+            ftp = ftp.replace(/\"/g, "");
+            ftp = ftp.replace(/\//g, '');
+
+            var ppg = JSON.stringify(data[6]);
+            ppg = ppg.replace(/\"/g, "");
+            ppg = ppg.replace(/\//g, '');
+            $('.container1').append("<div>" + word + "/<div>");
         };
 
         function getjson() {
@@ -82,7 +105,7 @@
         {
             $.each(result, function (index, value) {
                 if (result[index] === "Keyword not found") {
-                    $('.container').append("<div>Result not found</div>");
+                    $('.container').append("<div>No URLs found with keyword</div>");
                 } else {
                     $('.container').append("<div><a href=\"" + result[index] + "\">" + result[index] + "</a></div>");
                 }
