@@ -120,7 +120,7 @@ namespace WorkerRole1
                 }
                 else if (status == "start")
                 {
-                    //initialRobot();
+                    initialRobot();
                     CloudQueueMessage message = queue.GetMessage();
                     message.SetMessageContent("run");
                     queue.UpdateMessage(message, TimeSpan.FromSeconds(0.0), MessageUpdateFields.Content | MessageUpdateFields.Visibility);
