@@ -111,21 +111,13 @@ namespace WebRole1
         [WebMethod]
         public List<string> findKeyword(string keyword)
         {
-            keyword = keyword.ToLower();
             if (cache.ContainsKey(keyword))
                 return cache[keyword];
             List<string> answer = new List<string>();
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
-            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-            CloudTable table = tableClient.GetTableReference("urltable");
-
-            TableQuery<WorkerRole1.UrlTable> query = new TableQuery<UrlTable>().Where
-                (TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, keyword));
-                
-            foreach (WorkerRole1.UrlTable entity in table.ExecuteQuery(query))
-            {
-                answer.Add(HttpUtility.UrlDecode(entity.RowKey));
-            }
+            keyword = keyword.ToLower();
+            string[] split = keyword.Split(new Char[] { ' ' });
+            foreach (string s in split)
+                getWords(s, answer);
 
             if (answer.Count > 0)
             {
@@ -138,6 +130,22 @@ namespace WebRole1
                 cache.Add(keyword, answer);
                 return answer;
             }
+        }
+
+        private List<string> getWords(string keyword, List<string> answer)
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("urltable");
+
+            TableQuery<WorkerRole1.UrlTable> query = new TableQuery<UrlTable>().Where
+                (TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, keyword));
+
+            foreach (WorkerRole1.UrlTable entity in table.ExecuteQuery(query))
+            {
+                answer.Add(HttpUtility.UrlDecode(entity.RowKey));
+            }
+            return answer;
         }
 
         [WebMethod]

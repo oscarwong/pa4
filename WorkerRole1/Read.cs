@@ -236,21 +236,13 @@ namespace WorkerRole1
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference("urltable");
 
-            TableQuery<UrlTable> query = new TableQuery<UrlTable>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "CNN"));
+            table.DeleteIfExists();
 
-            foreach (UrlTable entity in table.ExecuteQuery(query))
-            {
-                if (entity != null)
-                {
-                    TableOperation deleteOperation = TableOperation.Delete(entity);
+            TimeSpan sleepTime = new TimeSpan(0, 1, 0);
+            Thread.Sleep(sleepTime);
 
-                    table.Execute(deleteOperation);
-                }
-                else
-                {
-                    break;
-                }
-            }
+            CloudTable newTable = tableClient.GetTableReference("urltable");
+            newTable.CreateIfNotExists();
         }
 
         public void addToTable(string[] data)
@@ -314,7 +306,10 @@ namespace WorkerRole1
                             if (end > 0)
                                 siteData[1] = (pageTitle.Substring(0, end));
                             else
-                                siteData[1] = ((pageTitle.Substring(0, pageTitle.Length - 8)));
+                            {
+                                end = pageTitle.IndexOf("</title>");
+                                siteData[1] = ((pageTitle.Substring(0, end)));
+                            }                
                             title = false;
                         }
 
@@ -326,7 +321,7 @@ namespace WorkerRole1
                             publish = false;
                         }
 
-                        if (index > 0 && !line.Contains(".xml"))
+                        if (index > 0 && !line.Contains(".xml") && !line.Contains(".ico") && !line.Contains(".rss")) 
                         {
                             string temp;
                             string link = "";
