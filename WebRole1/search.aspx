@@ -73,7 +73,7 @@
             var ppg = JSON.stringify(data[6]);
             ppg = ppg.replace(/\"/g, "");
             ppg = ppg.replace(/\//g, '');
-            $('.container1').append("<div>" + word + "/<div>");
+            $('.container1').append("<table class=\"table table-bordered\"><tr><th>Name</th><th>GP</th><th>FGP</th><th>TPP</th><th>FTP</th><th>PPG</th></tr><tr><td>" + name + "</td><td>" + gp + "</td><td>" + fgp + "</td><td>" + tpp + "</td><td>" + ftp + "</td><td>" + ppg + "</td></tr></table>");
         };
 
         function getjson() {
@@ -87,9 +87,8 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "jsonp",
                 success: callback,
-                error: function (xhr, status, error) {
-                    var err = eval("(" + xhr.responseText + ")");
-                    alert(err.Message);
+                error: function () {
+                    $('.container1').append("<div>No basketball player(s) found with search query</div>");
                 }
             });
         };

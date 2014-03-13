@@ -75,16 +75,6 @@
         </div>
 
         <div>
-            <h1>Find a specific URL. Enter a URL</h1>
-            <input id="UserURL" type="text" />
-            <input id="URLButton" type="button" value="Submit" onclick="getInfo()" />
-        </div>
-
-        <div>
-            <span id="URLResults"></span>
-        </div>
-
-        <div>
             <input type="button" value="Refresh results" id="refresh" onclick="refreshResults()"/>
         </div>
     </form>

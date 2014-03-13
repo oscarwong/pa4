@@ -1,0 +1,93 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,300,700,600);
+
+@import url(reset.css);
+
+body {
+	background-color: #fff;
+	font-family: 'Open Sans', sans-serif;
+	font-size: 18px;
+	padding: 10px;
+	color: #333745;
+}
+
+p {
+	padding: 10px;
+}
+
+.error {
+	color: red;
+}
+
+.logo {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 600px;
+	padding-bottom: 60px;
+}
+
+.content {
+	width: 50%;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.back {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 150px;
+	padding-top: 60px;
+}
+
+table {
+	font-size: 11px;
+	color: #333333;
+	border-width: 1px;
+	border-color: #666666;
+	border-collapse: collapse;
+}
+
+table th {
+	color: #E9144A;
+	border-width: 1px;
+	font-weight: 700;
+	padding: 8px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #006CB7;
+}
+
+table td {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #ffffff;
+}
+
+input[type=text] {
+	padding:5px;
+	border:2px
+	solid #ccc; 
+	-webkit-border-radius: 5px;
+    border-radius: 5px;
+}
+
+input[type=text]:focus {
+	border-color:#006CB7; 
+}
+
+input[type=submit] {
+	padding:5px 15px;
+	background: #ccc;
+	border:0 none;
+    cursor: pointer;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+}
+
+input[type=submit]:hover {
+	background:#006CB7;
+	color: #fff;
+}

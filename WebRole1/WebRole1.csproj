@@ -99,7 +99,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="admin.asmx" />
-    <Content Include="dashboard.asmx" />
     <Content Include="obtain.asmx" />
     <Content Include="packages.config" />
     <Content Include="index.aspx" />
@@ -119,10 +118,6 @@
   <ItemGroup>
     <Compile Include="admin.asmx.cs">
       <DependentUpon>admin.asmx</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="dashboard.asmx.cs">
-      <DependentUpon>dashboard.asmx</DependentUpon>
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="obtain.asmx.cs">
